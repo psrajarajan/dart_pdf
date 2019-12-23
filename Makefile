@@ -13,8 +13,8 @@
  # limitations under the License.
 
  DART_SRC=$(shell find . -name '*.dart')
- CLNG_SRC=$(shell find printing/ios -name '*.java' -o -name '*.m' -o -name '*.h') $(shell find printing/android -name '*.java' -o -name '*.m' -o -name '*.h')
- SWFT_SRC=$(shell find . -name '*.swift')
+ CLNG_SRC=$(shell find printing/ios printing/macos printing/windows printing/android -name '*.cpp' -o -name '*.m' -o -name '*.h' -o -name '*.java')
+ SWFT_SRC=$(shell find printing/ios printing/macos -name '*.swift')
  FONTS=pdf/open-sans.ttf pdf/open-sans-bold.ttf pdf/roboto.ttf pdf/noto-sans.ttf pdf/genyomintw.ttf demo/assets/roboto1.ttf demo/assets/roboto2.ttf demo/assets/roboto3.ttf demo/assets/open-sans.ttf demo/assets/open-sans-bold.ttf pdf/hacen-tunisia.ttf
  COV_PORT=9292
 
@@ -59,6 +59,9 @@ demo/assets/profile.jpg:
 
 pdf/hacen-tunisia.ttf:
 	curl -L "https://arbfonts.com/font_files/hacen/Hacen Tunisia.ttf" > $@
+
+
+https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F4290/pdfium-windows-x64.zip
 
 format: format-dart format-clang format-swift
 
