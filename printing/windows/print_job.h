@@ -1,14 +1,3 @@
-#ifndef PRINTING_PLUGIN_PRINT_JOB_H_
-#define PRINTING_PLUGIN_PRINT_JOB_H_
-
-// This must be included before many other Windows headers.
-#include <windows.h>
-
-// For getPlatformVersion; remove unless needed for your plugin implementation.
-#include <VersionHelpers.h>
-
-#include <flutter/method_channel.h>
-#include <flutter/plugin_registrar_windows.h>
 /*
  * Copyright (C) 2017, David PHAM-VAN <dev.nfet.net@gmail.com>
  *
@@ -25,22 +14,26 @@
  * limitations under the License.
  */
 
+#ifndef PRINTING_PLUGIN_PRINT_JOB_H_
+#define PRINTING_PLUGIN_PRINT_JOB_H_
+
 #include <flutter/standard_method_codec.h>
 
 #include <map>
 #include <memory>
 #include <sstream>
 
-#include "printing.h"
+namespace nfet {
 
-namespace printing {
+class Printing;
+
 class PrintJob {
  private:
-  std::shared_ptr<PrintingPlugin> printing;
+  Printing* printing;
   int index;
 
  public:
-  PrintJob(std::shared_ptr<PrintingPlugin> printing, int index);
+  PrintJob(Printing* printing, int index);
 
   void directPrintPdf(std::string name,
                       std::string data,
@@ -62,9 +55,9 @@ class PrintJob {
 
   void rasterPdf(std::string data, int pages[], double scale);
 
-  static flutter::EncodableMap printingInfo();
+  std::map<std::string, bool> printingInfo();
 };
 
-}  // namespace printing
+}  // namespace nfet
 
 #endif  // PRINTING_PLUGIN_PRINT_JOB_H_

@@ -18,37 +18,18 @@
 
 #include "print_job.h"
 
-namespace printing {
-// static
-void PrintingPlugin::RegisterWithRegistrar(
-    flutter::PluginRegistrarWindows* registrar) {
-  auto channel =
-      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "net.nfet.printing",
-          &flutter::StandardMethodCodec::GetInstance());
+namespace nfet {
 
-  auto plugin = std::make_unique<PrintingPlugin>();
+Printing::Printing() {}
 
-  channel->SetMethodCallHandler(
-      [plugin_pointer = plugin.get()](const auto& call, auto result) {
-        plugin_pointer->HandleMethodCall(call, std::move(result));
-      });
+Printing::~Printing() {}
 
-  registrar->AddPlugin(std::move(plugin));
+PrintJob* Printing::createJob() {
+  return new PrintJob{this, 0};
 }
 
-PrintingPlugin::PrintingPlugin() {}
-
-PrintingPlugin::~PrintingPlugin() {}
-
-void PrintingPlugin::HandleMethodCall(
-    const flutter::MethodCall<flutter::EncodableValue>& method_call,
-    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("printingInfo") == 0) {
-    result->Success(flutter::EncodableValue(PrintJob::printingInfo()));
-  } else {
-    result->NotImplemented();
-  }
+void Printing::remove(PrintJob* job) {
+  delete job;
 }
 
-}  // namespace printing
+}  // namespace nfet

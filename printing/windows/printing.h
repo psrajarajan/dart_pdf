@@ -14,40 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef PRINTING_PLUGIN_H_
-#define PRINTING_PLUGIN_H_
-
-// This must be included before many other Windows headers.
-#include <windows.h>
-
-// For getPlatformVersion; remove unless needed for your plugin implementation.
-#include <VersionHelpers.h>
-
-#include <flutter/method_channel.h>
-#include <flutter/plugin_registrar_windows.h>
-#include <flutter/standard_method_codec.h>
+#ifndef PRINTING_PLUGIN_PRINTING_H_
+#define PRINTING_PLUGIN_PRINTING_H_
 
 #include <map>
 #include <memory>
 #include <sstream>
 
-namespace printing {
+// #include "print_job.h"
 
-class PrintingPlugin : public flutter::Plugin {
+namespace nfet {
+
+class PrintJob;
+
+class Printing {
  public:
-  static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
+  Printing();
 
-  PrintingPlugin();
+  virtual ~Printing();
 
-  virtual ~PrintingPlugin();
+  PrintJob* createJob();
 
- private:
-  // Called when a method is called on this plugin's channel from Dart.
-  void HandleMethodCall(
-      const flutter::MethodCall<flutter::EncodableValue>& method_call,
-      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+  void remove(PrintJob* job);
 };
 
-}  // namespace printing
+}  // namespace nfet
 
-#endif  // PRINTING_PLUGIN_H_
+#endif  // PRINTING_PLUGIN_PRINTING_H_

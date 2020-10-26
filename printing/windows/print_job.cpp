@@ -16,22 +16,36 @@
 
 #include "print_job.h"
 
-namespace printing {
+namespace nfet {
 
-PrintJob::PrintJob(std::shared_ptr<PrintingPlugin> printing, int index)
+PrintJob::PrintJob(Printing* printing, int index)
     : printing(printing), index(index) {}
 
-flutter::EncodableMap PrintJob::printingInfo() {
-  return flutter::EncodableMap{
-      {flutter::EncodableValue("directPrint"), flutter::EncodableValue(false)},
-      {flutter::EncodableValue("dynamicLayout"),
-       flutter::EncodableValue(false)},
-      {flutter::EncodableValue("canPrint"), flutter::EncodableValue(true)},
-      {flutter::EncodableValue("canConvertHtml"),
-       flutter::EncodableValue(true)},
-      {flutter::EncodableValue("canShare"), flutter::EncodableValue(true)},
-      {flutter::EncodableValue("canRaster"), flutter::EncodableValue(true)},
+void PrintJob::directPrintPdf(std::string name,
+                              std::string data,
+                              std::string withPrinter) {}
+
+void PrintJob::printPdf(std::string name,
+                        double width,
+                        double height,
+                        double marginLeft,
+                        double marginTop,
+                        double marginRight,
+                        double marginBottom) {}
+
+void PrintJob::cancelJob(std::string error) {}
+
+void PrintJob::sharePdf(std::string data, std::string name) {}
+
+void PrintJob::pickPrinter(void* result) {}
+
+void PrintJob::rasterPdf(std::string data, int pages[], double scale) {}
+
+std::map<std::string, bool> PrintJob::printingInfo() {
+  return std::map<std::string, bool>{
+      {"directPrint", true},     {"dynamicLayout", false}, {"canPrint", true},
+      {"canConvertHtml", false}, {"canShare", true},       {"canRaster", true},
   };
 }
 
-}  // namespace printing
+}  // namespace nfet
