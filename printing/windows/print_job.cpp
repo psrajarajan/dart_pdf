@@ -16,13 +16,17 @@
 
 #include "print_job.h"
 
+#include "printing.h"
+
+#include <fpdfview.h>
+
 namespace nfet {
 
 PrintJob::PrintJob(Printing* printing, int index)
     : printing(printing), index(index) {}
 
 void PrintJob::directPrintPdf(std::string name,
-                              std::string data,
+                              std::vector<uint8_t> data,
                               std::string withPrinter) {}
 
 void PrintJob::printPdf(std::string name,
@@ -35,11 +39,53 @@ void PrintJob::printPdf(std::string name,
 
 void PrintJob::cancelJob(std::string error) {}
 
-void PrintJob::sharePdf(std::string data, std::string name) {}
+void PrintJob::sharePdf(std::vector<uint8_t> data, std::string name) {}
 
 void PrintJob::pickPrinter(void* result) {}
 
-void PrintJob::rasterPdf(std::string data, int pages[], double scale) {}
+void PrintJob::rasterPdf(std::vector<uint8_t> data,
+                         std::vector<int> pages,
+                         double scale) {
+  FPDF_InitLibraryWithConfig(nullptr);
+
+  auto doc = FPDF_LoadMemDocument64(data.data(), data.size(), nullptr);
+  printf("Error: %d\n", FPDF_GetLastError());
+
+  auto pageCount = FPDF_GetPageCount(doc);
+
+  for (auto n : pages) {
+    if (n >= pageCount) {
+      continue;
+    }
+
+    auto page = FPDF_LoadPage(doc, n);
+    printf("Error: %d\n", FPDF_GetLastError());
+
+    auto width = FPDF_GetPageWidth(page);
+    auto height = FPDF_GetPageHeight(page);
+
+    printf("pdf: pages:%d w:%f h:%f\n", pageCount, width, height);
+
+    auto bWidth = static_cast<int>(width);
+    auto bHeight = static_cast<int>(height);
+
+    auto bitmap = FPDFBitmap_Create(bWidth, bHeight, 0);
+    FPDFBitmap_FillRect(bitmap, 0, 0, bWidth, bHeight, 0xffffffff);
+
+    FPDF_RenderPageBitmap(bitmap, page, 0, 0, bWidth, bHeight, 0, 0);
+
+    uint8_t* p = static_cast<uint8_t*>(FPDFBitmap_GetBuffer(bitmap));
+    size_t l = bHeight * FPDFBitmap_GetStride(bitmap);
+
+    printing->onPageRasterized(std::vector<uint8_t>{p, p + l}, width, height, index);
+  }
+
+  FPDF_CloseDocument(doc);
+
+  FPDF_DestroyLibrary();
+
+  printing->onPageRasterEnd(index);
+}
 
 std::map<std::string, bool> PrintJob::printingInfo() {
   return std::map<std::string, bool>{

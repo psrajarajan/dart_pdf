@@ -34,83 +34,89 @@ namespace nfet {
 
 class PrintingPlugin : public flutter::Plugin {
  public:
-  static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
+  static void RegisterWithRegistrar(
+      flutter::PluginRegistrarWindows* registrar) {
+    auto channel =
+        std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+            registrar->messenger(), "net.nfet.printing",
+            &flutter::StandardMethodCodec::GetInstance());
 
-  PrintingPlugin();
+    auto plugin = std::make_unique<PrintingPlugin>(channel.get());
 
-  virtual ~PrintingPlugin();
+    channel->SetMethodCallHandler(
+        [plugin_pointer = plugin.get()](const auto& call, auto result) {
+          plugin_pointer->HandleMethodCall(call, std::move(result));
+        });
+
+    registrar->AddPlugin(std::move(plugin));
+  }
+
+  PrintingPlugin(flutter::MethodChannel<flutter::EncodableValue>* channel)
+      : printing(channel) {}
+
+  virtual ~PrintingPlugin() {}
 
  private:
-  Printing printing{};
+  Printing printing;
   // Called when a method is called on this plugin's channel from Dart.
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
-      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
-};
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+    if (method_call.method_name().compare("printPdf") == 0) {
+      auto job = printing.createJob(-1);
+      job->printPdf("name", 200, 200, 0, 0, 0, 0);
+      printing.remove(job);
+      result->Success(flutter::EncodableValue(0));
+    } else if (method_call.method_name().compare("directPrintPdf") == 0) {
+      auto job = printing.createJob(-1);
+      job->directPrintPdf("name", std::vector<uint8_t>{}, "withPrinter");
+      printing.remove(job);
+      result->Success(flutter::EncodableValue(0));
+    } else if (method_call.method_name().compare("sharePdf") == 0) {
+      auto job = printing.createJob(-1);
+      job->sharePdf(std::vector<uint8_t>{}, "name");
+      printing.remove(job);
+      result->Success(flutter::EncodableValue(0));
+    } else if (method_call.method_name().compare("pickPrinter") == 0) {
+      auto job = printing.createJob(-1);
+      job->pickPrinter(nullptr);
+      printing.remove(job);
+      result->Success(flutter::EncodableValue(0));
+    } else if (method_call.method_name().compare("rasterPdf") == 0) {
+      const auto* arguments =
+          std::get_if<flutter::EncodableMap>(method_call.arguments());
+      auto vDoc = arguments->find(flutter::EncodableValue("doc"));
+      auto doc = vDoc != arguments->end()
+                     ? std::get<std::vector<uint8_t>>(vDoc->second)
+                     : std::vector<uint8_t>{};
+      auto vPages = arguments->find(flutter::EncodableValue("pages"));
+      auto pages = vPages != arguments->end()
+                       ? std::get<flutter ::EncodableList>(vPages->second)
+                       : flutter ::EncodableList{};
+      auto vScale = arguments->find(flutter::EncodableValue("scale"));
+      auto vJob = arguments->find(flutter::EncodableValue("job"));
+      auto jobNum = vJob != arguments->end()
+                       ? std::get<int>(vJob->second)
+                       : -1;
 
-// static
-void PrintingPlugin::RegisterWithRegistrar(
-    flutter::PluginRegistrarWindows* registrar) {
-  auto channel =
-      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "net.nfet.printing",
-          &flutter::StandardMethodCodec::GetInstance());
-
-  auto plugin = std::make_unique<PrintingPlugin>();
-
-  channel->SetMethodCallHandler(
-      [plugin_pointer = plugin.get()](const auto& call, auto result) {
-        plugin_pointer->HandleMethodCall(call, std::move(result));
-      });
-
-  registrar->AddPlugin(std::move(plugin));
-}
-
-PrintingPlugin::PrintingPlugin() {}
-
-PrintingPlugin::~PrintingPlugin() {}
-
-void PrintingPlugin::HandleMethodCall(
-    const flutter::MethodCall<flutter::EncodableValue>& method_call,
-    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("printPdf") != 0) {
-    auto job = printing.createJob();
-    job->printPdf("name", 200, 200, 0, 0, 0, 0);
-    printing.remove(job);
-    result->Success(flutter::EncodableValue(0));
-  } else if (method_call.method_name().compare("directPrintPdf") != 0) {
-    auto job = printing.createJob();
-    job->directPrintPdf("name", nullptr, "withPrinter");
-    printing.remove(job);
-    result->Success(flutter::EncodableValue(0));
-  } else if (method_call.method_name().compare("sharePdf") != 0) {
-    auto job = printing.createJob();
-    job->sharePdf(nullptr, "name");
-    printing.remove(job);
-    result->Success(flutter::EncodableValue(0));
-  } else if (method_call.method_name().compare("pickPrinter") != 0) {
-    auto job = printing.createJob();
-    job->pickPrinter(nullptr);
-    printing.remove(job);
-    result->Success(flutter::EncodableValue(0));
-  } else if (method_call.method_name().compare("rasterPdf") != 0) {
-    auto job = printing.createJob();
-    job->rasterPdf(nullptr, {}, 1);
-    printing.remove(job);
-    result->Success(flutter::EncodableValue(0));
-  } else if (method_call.method_name().compare("printingInfo") == 0) {
-    auto job = printing.createJob();
-    auto map = flutter::EncodableMap{};
-    for (auto item : job->printingInfo()) {
-      map[flutter::EncodableValue(item.first)] =
-          flutter::EncodableValue(item.second);
+      auto job = printing.createJob(jobNum);
+      job->rasterPdf(doc, std::vector<int>{0}, 1);
+      printing.remove(job);
+      result->Success(flutter::EncodableValue(0));
+    } else if (method_call.method_name().compare("printingInfo") == 0) {
+      auto job = printing.createJob(-1);
+      auto map = flutter::EncodableMap{};
+      for (auto item : job->printingInfo()) {
+        map[flutter::EncodableValue(item.first)] =
+            flutter::EncodableValue(item.second);
+      }
+      result->Success(map);
+      printing.remove(job);
+    } else {
+      result->NotImplemented();
     }
-    result->Success(flutter::EncodableValue(map));
-    printing.remove(job);
-  } else {
-    result->NotImplemented();
   }
-}
+};
 
 }  // namespace nfet
 

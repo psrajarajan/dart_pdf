@@ -20,16 +20,46 @@
 
 namespace nfet {
 
-Printing::Printing() {}
+Printing::Printing(
+    flutter::MethodChannel<flutter::EncodableValue>*channel)
+    : channel(channel) {}
 
 Printing::~Printing() {}
 
-PrintJob* Printing::createJob() {
-  return new PrintJob{this, 0};
+PrintJob* Printing::createJob(int num) {
+  return new PrintJob{this, num};
 }
 
 void Printing::remove(PrintJob* job) {
   delete job;
+}
+
+void Printing::onPageRasterized(std::vector<uint8_t> data,
+                                double width,
+                                double height,
+                                int job) {
+  channel->InvokeMethod(
+      "onPageRasterized",
+      std::make_unique<flutter::EncodableValue>(
+          flutter::EncodableValue(flutter::EncodableMap{
+              {flutter::EncodableValue("image"), flutter::EncodableValue(data)},
+              {flutter::EncodableValue("width"),
+               flutter::EncodableValue(width)},
+              {flutter::EncodableValue("height"),
+               flutter::EncodableValue(height)},
+              {flutter::EncodableValue("job"), flutter::EncodableValue(job)}
+
+          })));
+}
+
+void Printing::onPageRasterEnd(int job) {
+  channel->InvokeMethod(
+      "onPageRasterEnd",
+      std::make_unique<flutter::EncodableValue>(
+          flutter::EncodableValue(flutter::EncodableMap{
+              {flutter::EncodableValue("job"), flutter::EncodableValue(job)}
+
+          })));
 }
 
 }  // namespace nfet

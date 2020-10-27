@@ -20,6 +20,8 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 # changed
 set(PLUGIN_NAME "printing_plugin")
 
+include(pdfium/PDFiumConfig.cmake)
+
 add_library(${PLUGIN_NAME} SHARED
             "printing.cpp"
             "printing.h"
@@ -33,7 +35,7 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 target_include_directories(${PLUGIN_NAME}
                            INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
+target_link_libraries(${PLUGIN_NAME} PRIVATE pdfium flutter flutter_wrapper_plugin)
 
 # List of absolute paths to libraries that should be bundled with the plugin
-set(printing_bundled_libraries "" PARENT_SCOPE)
+set(printing_bundled_libraries "${CMAKE_CURRENT_SOURCE_DIR}/pdfium/x64/bin/pdfium.dll" PARENT_SCOPE)

@@ -20,6 +20,7 @@
 #include <flutter/standard_method_codec.h>
 
 #include <map>
+#include <vector>
 #include <memory>
 #include <sstream>
 
@@ -36,7 +37,7 @@ class PrintJob {
   PrintJob(Printing* printing, int index);
 
   void directPrintPdf(std::string name,
-                      std::string data,
+                      std::vector<uint8_t> data,
                       std::string withPrinter);
 
   void printPdf(std::string name,
@@ -49,11 +50,11 @@ class PrintJob {
 
   void cancelJob(std::string error);
 
-  void sharePdf(std::string data, std::string name);
+  void sharePdf(std::vector<uint8_t> data, std::string name);
 
   void pickPrinter(void* result);
 
-  void rasterPdf(std::string data, int pages[], double scale);
+  void rasterPdf(std::vector<uint8_t> data, std::vector<int> pages, double scale);
 
   std::map<std::string, bool> printingInfo();
 };

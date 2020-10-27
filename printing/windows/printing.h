@@ -20,6 +20,9 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <vector>
+
+#include <flutter/method_channel.h>
 
 // #include "print_job.h"
 
@@ -28,14 +31,24 @@ namespace nfet {
 class PrintJob;
 
 class Printing {
+ private:
+  flutter::MethodChannel<flutter::EncodableValue>* channel;
+
  public:
-  Printing();
+  Printing(flutter::MethodChannel<flutter::EncodableValue>* channel);
 
   virtual ~Printing();
 
-  PrintJob* createJob();
+  PrintJob* createJob(int num);
 
   void remove(PrintJob* job);
+
+  void onPageRasterized(std::vector<uint8_t> data,
+                        double width,
+                        double height,
+                        int job);
+
+  void onPageRasterEnd(int job);
 };
 
 }  // namespace nfet
