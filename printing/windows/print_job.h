@@ -19,6 +19,8 @@
 
 #include <flutter/standard_method_codec.h>
 
+#include <windows.h>
+
 #include <map>
 #include <memory>
 #include <sstream>
@@ -32,9 +34,16 @@ class PrintJob {
  private:
   Printing* printing;
   int index;
+  HGLOBAL hDevMode  = nullptr;
+  HGLOBAL hDevNames = nullptr;
+  HDC hDC = nullptr;
 
  public:
   PrintJob(Printing* printing, int index);
+
+  ~PrintJob() {
+    printf("Delete PrintJob #%d\n", index);
+  }
 
   int id() { return index; }
 
@@ -43,6 +52,8 @@ class PrintJob {
                       std::string withPrinter);
 
   void printPdf(std::string name);
+
+  void writeJob(std::vector<uint8_t> data);
 
   void cancelJob(std::string error);
 

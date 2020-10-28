@@ -48,16 +48,59 @@ void Printing::onPageRasterized(std::vector<uint8_t> data,
               {flutter::EncodableValue("height"),
                flutter::EncodableValue(height)},
               {flutter::EncodableValue("job"),
-               flutter::EncodableValue(job->id())}})));
+               flutter::EncodableValue(job->id())},
+          })));
 }
 
 void Printing::onPageRasterEnd(PrintJob* job) {
-  channel->InvokeMethod(
-      "onPageRasterEnd",
-      std::make_unique<flutter::EncodableValue>(flutter::EncodableValue(
-          flutter::EncodableMap{{flutter::EncodableValue("job"),
-                                 flutter::EncodableValue(job->id())}})));
+  channel->InvokeMethod("onPageRasterEnd",
+                        std::make_unique<flutter::EncodableValue>(
+                            flutter::EncodableValue(flutter::EncodableMap{
+                                {flutter::EncodableValue("job"),
+                                 flutter::EncodableValue(job->id())},
+                            })));
 }
+
+class OnLayoutResult : public flutter::MethodResult<flutter::EncodableValue> {
+ public:
+  OnLayoutResult(PrintJob* job_) : job(job_) {
+    n = 90;
+    printf("OnLayoutResult (%d) %p\n", job->id(), this);
+  }
+
+  OnLayoutResult(const OnLayoutResult& other) {
+    job = other.job;
+    printf("OnLayoutResult copy (%d) %p\n", job->id(), this);
+  }
+
+  OnLayoutResult(const OnLayoutResult&& other) {
+    job = other.job;
+    printf("OnLayoutResult move (%d) %p\n", job->id(), this);
+  }
+
+  ~OnLayoutResult() {
+    printf("OnLayoutResult delete (%d) %p\n", job->id(), this);
+  }
+
+ private:
+  PrintJob* job;
+  int n = 0;
+
+ protected:
+  void SuccessInternal(const flutter::EncodableValue* result) {
+    auto doc = std::get<std::vector<uint8_t>>(*result);
+    printf("Success! n:%d (%d) %llu bytes %p\n", n, job->id(), doc.size(), this);
+    job->writeJob(doc);
+  }
+
+  void ErrorInternal(const std::string& error_code,
+                     const std::string& error_message,
+                     const flutter::EncodableValue* error_details) {
+    printf("Error!\n");
+  }
+
+  void NotImplementedInternal() { printf("NotImplemented!\n"); }
+};
 
 void Printing::onLayout(PrintJob* job,
                         double pageWidth,
@@ -66,8 +109,30 @@ void Printing::onLayout(PrintJob* job,
                         double marginTop,
                         double marginRight,
                         double marginBottom) {
-  printf("onLayout %fx%f %f %f %f %f\n", pageWidth, pageHeight, marginLeft,
-         marginTop, marginRight, marginBottom);
+  printf("onLayout (%d) %fx%f %f %f %f %f\n", job->id(), pageWidth, pageHeight,
+         marginLeft, marginTop, marginRight, marginBottom);
+
+  // auto result = std::make_unique<OnLayoutResult>(job);
+
+  channel->InvokeMethod("onLayout",
+                        std::make_unique<flutter::EncodableValue>(
+                            flutter::EncodableValue(flutter::EncodableMap{
+                                {flutter::EncodableValue("job"),
+                                 flutter::EncodableValue(job->id())},
+                                {flutter::EncodableValue("width"),
+                                 flutter::EncodableValue(pageWidth)},
+                                {flutter::EncodableValue("height"),
+                                 flutter::EncodableValue(pageHeight)},
+                                {flutter::EncodableValue("marginLeft"),
+                                 flutter::EncodableValue(marginLeft)},
+                                {flutter::EncodableValue("marginTop"),
+                                 flutter::EncodableValue(marginTop)},
+                                {flutter::EncodableValue("marginRight"),
+                                 flutter::EncodableValue(marginRight)},
+                                {flutter::EncodableValue("marginBottom"),
+                                 flutter::EncodableValue(marginBottom)},
+                            })),
+                        std::make_unique<OnLayoutResult>(job));
 }
 
 }  // namespace nfet

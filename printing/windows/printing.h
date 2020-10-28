@@ -49,12 +49,12 @@ class Printing {
   void onPageRasterEnd(PrintJob* job);
 
   void onLayout(PrintJob* job,
-                double pageWidth,
-                double pageHeight,
-                double marginLeft,
-                double marginTop,
-                double marginRight,
-                double marginBottom);
+                                double pageWidth,
+                                double pageHeight,
+                                double marginLeft,
+                                double marginTop,
+                                double marginRight,
+                                double marginBottom);
 };
 
 }  // namespace nfet

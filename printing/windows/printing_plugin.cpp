@@ -73,7 +73,7 @@ class PrintingPlugin : public flutter::Plugin {
       auto jobNum = vJob != arguments->end() ? std::get<int>(vJob->second) : -1;
       auto job = printing.createJob(jobNum);
       job->printPdf(name);
-      printing.remove(job);
+      // printing.remove(job);
       result->Success(flutter::EncodableValue(1));
     } else if (method_call.method_name().compare("directPrintPdf") == 0) {
       auto job = printing.createJob(-1);
