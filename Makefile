@@ -17,8 +17,9 @@
  SWFT_SRC=$(shell find printing/ios printing/macos -name '*.swift')
  FONTS=pdf/open-sans.ttf pdf/open-sans-bold.ttf pdf/roboto.ttf pdf/noto-sans.ttf pdf/genyomintw.ttf demo/assets/roboto1.ttf demo/assets/roboto2.ttf demo/assets/roboto3.ttf demo/assets/open-sans.ttf demo/assets/open-sans-bold.ttf pdf/hacen-tunisia.ttf
  COV_PORT=9292
+ LIBS=printing/windows/pdfium/x64/bin/pdfium.dll
 
-all: $(FONTS) demo/assets/logo.png demo/assets/profile.jpg format printing/example/.metadata get
+all: $(FONTS) $(LIBS) demo/assets/logo.png demo/assets/profile.jpg format printing/example/.metadata get
 
 pdf/open-sans.ttf:
 	curl -L "https://fonts.gstatic.com/s/opensans/v17/mem8YaGs126MiZpBA-U1Ug.ttf" > $@
@@ -60,19 +61,22 @@ demo/assets/profile.jpg:
 pdf/hacen-tunisia.ttf:
 	curl -L "https://arbfonts.com/font_files/hacen/Hacen Tunisia.ttf" > $@
 
-
-https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F4290/pdfium-windows-x64.zip
+printing/windows/pdfium/x64/bin/pdfium.dll:
+	curl -L https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F4290/pdfium-windows-x64.zip --output pdfium-windows-x64.zip
+	mkdir -p printing/windows/pdfium
+	cd printing/windows/pdfium; unzip ../../../pdfium-windows-x64.zip
+	rm -f pdfium-windows-x64.zip
 
 format: format-dart format-clang format-swift
 
 format-dart: $(DART_SRC)
-	dartfmt -w --fix $^
+	dart format --fix $^
 
 format-clang: $(CLNG_SRC)
 	clang-format -style=Chromium -i $^
 
 format-swift: $(SWFT_SRC)
-	swiftformat --swiftversion 4.2 $^
+	which swiftformat && swiftformat --swiftversion 4.2 $^ || true
 
 .coverage:
 	which coverage || pub global activate coverage
@@ -86,7 +90,7 @@ printing/example/.metadata:
 	rm -rf printing/example/test
 
 pdf/pubspec.lock: pdf/pubspec.yaml
-	cd pdf; pub get
+	cd pdf; dart pub get
 
 printing/pubspec.lock: printing/pubspec.yaml
 	cd printing; flutter packages get
