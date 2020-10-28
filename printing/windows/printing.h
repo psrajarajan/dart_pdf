@@ -32,10 +32,8 @@ class PrintJob;
 
 class Printing {
  private:
-  flutter::MethodChannel<flutter::EncodableValue>* channel;
-
  public:
-  Printing(flutter::MethodChannel<flutter::EncodableValue>* channel);
+  Printing();
 
   virtual ~Printing();
 
@@ -44,11 +42,19 @@ class Printing {
   void remove(PrintJob* job);
 
   void onPageRasterized(std::vector<uint8_t> data,
-                        double width,
-                        double height,
-                        int job);
+                        int width,
+                        int height,
+                        PrintJob* job);
 
-  void onPageRasterEnd(int job);
+  void onPageRasterEnd(PrintJob* job);
+
+  void onLayout(PrintJob* job,
+                double pageWidth,
+                double pageHeight,
+                double marginLeft,
+                double marginTop,
+                double marginRight,
+                double marginBottom);
 };
 
 }  // namespace nfet

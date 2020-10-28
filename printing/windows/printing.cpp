@@ -20,9 +20,9 @@
 
 namespace nfet {
 
-Printing::Printing(
-    flutter::MethodChannel<flutter::EncodableValue>*channel)
-    : channel(channel) {}
+extern std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel;
+
+Printing::Printing() {}
 
 Printing::~Printing() {}
 
@@ -35,9 +35,9 @@ void Printing::remove(PrintJob* job) {
 }
 
 void Printing::onPageRasterized(std::vector<uint8_t> data,
-                                double width,
-                                double height,
-                                int job) {
+                                int width,
+                                int height,
+                                PrintJob* job) {
   channel->InvokeMethod(
       "onPageRasterized",
       std::make_unique<flutter::EncodableValue>(
@@ -47,19 +47,27 @@ void Printing::onPageRasterized(std::vector<uint8_t> data,
                flutter::EncodableValue(width)},
               {flutter::EncodableValue("height"),
                flutter::EncodableValue(height)},
-              {flutter::EncodableValue("job"), flutter::EncodableValue(job)}
-
-          })));
+              {flutter::EncodableValue("job"),
+               flutter::EncodableValue(job->id())}})));
 }
 
-void Printing::onPageRasterEnd(int job) {
+void Printing::onPageRasterEnd(PrintJob* job) {
   channel->InvokeMethod(
       "onPageRasterEnd",
-      std::make_unique<flutter::EncodableValue>(
-          flutter::EncodableValue(flutter::EncodableMap{
-              {flutter::EncodableValue("job"), flutter::EncodableValue(job)}
+      std::make_unique<flutter::EncodableValue>(flutter::EncodableValue(
+          flutter::EncodableMap{{flutter::EncodableValue("job"),
+                                 flutter::EncodableValue(job->id())}})));
+}
 
-          })));
+void Printing::onLayout(PrintJob* job,
+                        double pageWidth,
+                        double pageHeight,
+                        double marginLeft,
+                        double marginTop,
+                        double marginRight,
+                        double marginBottom) {
+  printf("onLayout %fx%f %f %f %f %f\n", pageWidth, pageHeight, marginLeft,
+         marginTop, marginRight, marginBottom);
 }
 
 }  // namespace nfet

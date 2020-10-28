@@ -20,9 +20,9 @@
 #include <flutter/standard_method_codec.h>
 
 #include <map>
-#include <vector>
 #include <memory>
 #include <sstream>
+#include <vector>
 
 namespace nfet {
 
@@ -36,17 +36,13 @@ class PrintJob {
  public:
   PrintJob(Printing* printing, int index);
 
+  int id() { return index; }
+
   void directPrintPdf(std::string name,
                       std::vector<uint8_t> data,
                       std::string withPrinter);
 
-  void printPdf(std::string name,
-                double width,
-                double height,
-                double marginLeft,
-                double marginTop,
-                double marginRight,
-                double marginBottom);
+  void printPdf(std::string name);
 
   void cancelJob(std::string error);
 
@@ -54,7 +50,9 @@ class PrintJob {
 
   void pickPrinter(void* result);
 
-  void rasterPdf(std::vector<uint8_t> data, std::vector<int> pages, double scale);
+  void rasterPdf(std::vector<uint8_t> data,
+                 std::vector<int> pages,
+                 double scale);
 
   std::map<std::string, bool> printingInfo();
 };

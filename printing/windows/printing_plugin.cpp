@@ -32,16 +32,17 @@
 
 namespace nfet {
 
+std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel;
+
 class PrintingPlugin : public flutter::Plugin {
  public:
   static void RegisterWithRegistrar(
       flutter::PluginRegistrarWindows* registrar) {
-    auto channel =
-        std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-            registrar->messenger(), "net.nfet.printing",
-            &flutter::StandardMethodCodec::GetInstance());
+    channel = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+        registrar->messenger(), "net.nfet.printing",
+        &flutter::StandardMethodCodec::GetInstance());
 
-    auto plugin = std::make_unique<PrintingPlugin>(channel.get());
+    auto plugin = std::make_unique<PrintingPlugin>();
 
     channel->SetMethodCallHandler(
         [plugin_pointer = plugin.get()](const auto& call, auto result) {
@@ -51,37 +52,44 @@ class PrintingPlugin : public flutter::Plugin {
     registrar->AddPlugin(std::move(plugin));
   }
 
-  PrintingPlugin(flutter::MethodChannel<flutter::EncodableValue>* channel)
-      : printing(channel) {}
+  PrintingPlugin() {}
 
   virtual ~PrintingPlugin() {}
 
  private:
-  Printing printing;
+  Printing printing{};
   // Called when a method is called on this plugin's channel from Dart.
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
     if (method_call.method_name().compare("printPdf") == 0) {
-      auto job = printing.createJob(-1);
-      job->printPdf("name", 200, 200, 0, 0, 0, 0);
+      const auto* arguments =
+          std::get_if<flutter::EncodableMap>(method_call.arguments());
+      auto vName = arguments->find(flutter::EncodableValue("name"));
+      auto name = vName != arguments->end()
+                      ? std::get<std::string>(vName->second)
+                      : std::string{};
+      auto vJob = arguments->find(flutter::EncodableValue("job"));
+      auto jobNum = vJob != arguments->end() ? std::get<int>(vJob->second) : -1;
+      auto job = printing.createJob(jobNum);
+      job->printPdf(name);
       printing.remove(job);
-      result->Success(flutter::EncodableValue(0));
+      result->Success(flutter::EncodableValue(1));
     } else if (method_call.method_name().compare("directPrintPdf") == 0) {
       auto job = printing.createJob(-1);
       job->directPrintPdf("name", std::vector<uint8_t>{}, "withPrinter");
       printing.remove(job);
-      result->Success(flutter::EncodableValue(0));
+      result->Success(nullptr);
     } else if (method_call.method_name().compare("sharePdf") == 0) {
       auto job = printing.createJob(-1);
       job->sharePdf(std::vector<uint8_t>{}, "name");
       printing.remove(job);
-      result->Success(flutter::EncodableValue(0));
+      result->Success(nullptr);
     } else if (method_call.method_name().compare("pickPrinter") == 0) {
       auto job = printing.createJob(-1);
       job->pickPrinter(nullptr);
       printing.remove(job);
-      result->Success(flutter::EncodableValue(0));
+      result->Success(nullptr);
     } else if (method_call.method_name().compare("rasterPdf") == 0) {
       const auto* arguments =
           std::get_if<flutter::EncodableMap>(method_call.arguments());
@@ -89,20 +97,20 @@ class PrintingPlugin : public flutter::Plugin {
       auto doc = vDoc != arguments->end()
                      ? std::get<std::vector<uint8_t>>(vDoc->second)
                      : std::vector<uint8_t>{};
-      auto vPages = arguments->find(flutter::EncodableValue("pages"));
-      auto pages = vPages != arguments->end()
-                       ? std::get<flutter ::EncodableList>(vPages->second)
-                       : flutter ::EncodableList{};
+      //     auto vPages = arguments->find(flutter::EncodableValue("pages"));
+      //     auto pages = vPages != arguments->end()
+      //                      ? std::get<flutter
+      //                      ::EncodableList>(vPages->second) : flutter
+      //                      ::EncodableList{};
       auto vScale = arguments->find(flutter::EncodableValue("scale"));
+      auto scale =
+          vScale != arguments->end() ? std::get<double>(vScale->second) : 1;
       auto vJob = arguments->find(flutter::EncodableValue("job"));
-      auto jobNum = vJob != arguments->end()
-                       ? std::get<int>(vJob->second)
-                       : -1;
-
+      auto jobNum = vJob != arguments->end() ? std::get<int>(vJob->second) : -1;
       auto job = printing.createJob(jobNum);
-      job->rasterPdf(doc, std::vector<int>{0}, 1);
+      job->rasterPdf(doc, std::vector<int>{0}, scale);
+      result->Success(nullptr);
       printing.remove(job);
-      result->Success(flutter::EncodableValue(0));
     } else if (method_call.method_name().compare("printingInfo") == 0) {
       auto job = printing.createJob(-1);
       auto map = flutter::EncodableMap{};
